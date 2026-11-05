@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +28,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,8 +39,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.gaao.app.presentation.components.KineticLyricScene
 import com.gaao.app.presentation.components.LyricsDisplay
 import com.gaao.app.presentation.components.StateMessage
+import com.gaao.app.ui.theme.BebasNeueFamily
+import com.gaao.app.ui.theme.PlayfairDisplayFamily
 import java.util.Locale
 
 @Composable
@@ -49,6 +54,7 @@ fun GaaOScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val statusBarPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    var isVerticalMode by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.checkPermissionAndRefresh()
@@ -59,20 +65,30 @@ fun GaaOScreen(
         color = Color.Black
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // Main lyrics or state view
             if (uiState.appState == GaaOAppState.PLAYING || uiState.appState == GaaOAppState.PAUSED) {
-                LyricsDisplay(
-                    lines = uiState.lyrics,
-                    activeLineIndex = uiState.syncState.activeIndex,
-                    isPaused = uiState.appState == GaaOAppState.PAUSED,
-                    modifier = Modifier.fillMaxSize()
-                )
+                // Primary Display: Creative Kinetic Scene or Vertical Scroll List
+                if (isVerticalMode) {
+                    LyricsDisplay(
+                        lines = uiState.lyrics,
+                        activeLineIndex = uiState.syncState.activeIndex,
+                        isPaused = uiState.appState == GaaOAppState.PAUSED,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    KineticLyricScene(
+                        currentLine = uiState.syncState.activeLine,
+                        nextLine = uiState.syncState.nextLine,
+                        currentPositionMs = uiState.currentPositionMs,
+                        syncOffsetMs = uiState.syncOffsetMs,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
 
                 // Minimalist cinematic header overlay
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = statusBarPadding + 8.dp, start = 24.dp, end = 16.dp)
+                        .padding(top = statusBarPadding + 10.dp, start = 20.dp, end = 16.dp)
                         .align(Alignment.TopCenter)
                 ) {
                     Row(
@@ -83,17 +99,18 @@ fun GaaOScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = uiState.trackTitle ?: "",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
+                                fontFamily = BebasNeueFamily,
+                                fontSize = 24.sp,
+                                letterSpacing = 1.sp,
                                 color = Color.White,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
-                            Spacer(modifier = Modifier.height(2.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
                                     text = uiState.artist ?: "",
-                                    style = MaterialTheme.typography.bodySmall,
+                                    fontFamily = PlayfairDisplayFamily,
+                                    fontSize = 13.sp,
                                     color = Color(0xFFAAAAAA),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
@@ -108,7 +125,7 @@ fun GaaOScreen(
                                     ) {
                                         Text(
                                             text = "PAUSED",
-                                            fontSize = 10.sp,
+                                            fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color(0xFFFFB74D)
                                         )
@@ -117,18 +134,36 @@ fun GaaOScreen(
                             }
                         }
 
-                        // Discreet toggle for telemetry / diagnostic view
-                        Box(
-                            modifier = Modifier
-                                .background(Color(0x33FFFFFF), RoundedCornerShape(12.dp))
-                                .clickable { viewModel.toggleDiagnosticOverlay() }
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
-                        ) {
-                            Text(
-                                text = if (uiState.showDiagnosticOverlay) "Hide Stats" else "Stats",
-                                fontSize = 11.sp,
-                                color = Color(0xFFDDDDDD)
-                            )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            // Layout mode toggle (Kinetic Scene vs Scroll List)
+                            Box(
+                                modifier = Modifier
+                                    .background(Color(0x22FFFFFF), RoundedCornerShape(12.dp))
+                                    .clickable { isVerticalMode = !isVerticalMode }
+                                    .padding(horizontal = 9.dp, vertical = 5.dp)
+                            ) {
+                                Text(
+                                    text = if (isVerticalMode) "Poster" else "List",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFFCCCCCC)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            // Stats / Offset drawer toggle
+                            Box(
+                                modifier = Modifier
+                                    .background(Color(0x22FFFFFF), RoundedCornerShape(12.dp))
+                                    .clickable { viewModel.toggleDiagnosticOverlay() }
+                                    .padding(horizontal = 9.dp, vertical = 5.dp)
+                            ) {
+                                Text(
+                                    text = if (uiState.showDiagnosticOverlay) "Hide" else "Stats",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFFCCCCCC)
+                                )
+                            }
                         }
                     }
                 }
@@ -141,14 +176,14 @@ fun GaaOScreen(
                 )
             }
 
-            // Diagnostic Telemetry Overlay (with real-time offset fine-tuning)
+            // Diagnostic Telemetry & Timing Calibrator Overlay
             AnimatedVisibility(
                 visible = uiState.showDiagnosticOverlay,
                 enter = fadeIn(),
                 exit = fadeOut(),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = statusBarPadding + 60.dp, start = 16.dp, end = 16.dp)
+                    .padding(top = statusBarPadding + 64.dp, start = 16.dp, end = 16.dp)
                     .align(Alignment.TopCenter)
             ) {
                 Card(
@@ -158,14 +193,14 @@ fun GaaOScreen(
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
                         Text(
-                            text = "Telemetry & Sync Engine",
+                            text = "Telemetry & Timing Calibration",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF81C784)
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "App: ${uiState.appDisplayName ?: "None"}  •  Status: ${uiState.appState.name}",
+                            text = "Source: ${uiState.appDisplayName ?: "None"}  •  State: ${uiState.appState.name}",
                             fontSize = 12.sp,
                             color = Color.LightGray
                         )
@@ -182,16 +217,10 @@ fun GaaOScreen(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
-                        val nextIn = uiState.syncState.msUntilNextLine?.let { "${String.format(Locale.US, "%.1fs", it / 1000.0)}" } ?: "End"
-                        Text(
-                            text = "Next Lyric In: $nextIn",
-                            fontSize = 12.sp,
-                            color = Color(0xFF64B5F6)
-                        )
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // Real-time sync offset calibrator
+                        // Live timing adjuster
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
