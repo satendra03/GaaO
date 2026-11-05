@@ -5,32 +5,28 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
-import com.gaao.app.presentation.DiagnosticScreen
-import com.gaao.app.presentation.DiagnosticViewModel
+import com.gaao.app.presentation.GaaOScreen
+import com.gaao.app.presentation.LyricsViewModel
 import com.gaao.app.ui.theme.GaaOTheme
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var viewModel: DiagnosticViewModel
+    private lateinit var viewModel: LyricsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        viewModel = ViewModelProvider(this)[DiagnosticViewModel::class.java]
+        viewModel = ViewModelProvider(this)[LyricsViewModel::class.java]
 
         setContent {
             GaaOTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    DiagnosticScreen(
-                        viewModel = viewModel,
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                GaaOScreen(
+                    viewModel = viewModel,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
     }
