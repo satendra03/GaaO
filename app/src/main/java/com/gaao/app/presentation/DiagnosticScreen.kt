@@ -51,6 +51,7 @@ fun DiagnosticScreen(
     val statusMessage by viewModel.statusMessage.collectAsState()
     val currentPositionMs by viewModel.estimatedPositionMs.collectAsState()
     val lyricsState by viewModel.lyricsState.collectAsState()
+    val syncState by viewModel.syncState.collectAsState()
 
     // Refresh on composition
     LaunchedEffect(Unit) {
@@ -76,7 +77,7 @@ fun DiagnosticScreen(
             )
 
             Text(
-                text = "Phase 2 Prototype (Detection + LRCLIB Lyrics)",
+                text = "Phase 3: Live Lyrics Synchronization Engine",
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray
             )
@@ -306,26 +307,129 @@ fun DiagnosticScreen(
                                 value = "${result.lines.size} lines",
                                 valueColor = Color.White
                             )
+                        }
+                    }
+                }
+            }
 
-                            if (result.lines.isNotEmpty()) {
-                                Spacer(modifier = Modifier.height(12.dp))
+            // Phase 3 Synchronization Card (shown when lyrics are available)
+            if (lyricsState is LyricsResult.Success) {
+                val successResult = lyricsState as LyricsResult.Success
+                val totalCount = successResult.lines.size
+                val activeIdx = syncState.activeIndex
+                val formattedPosition = formatTime(currentPositionMs)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF1A221C)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Synchronization Engine (Phase 3)",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF81C784)
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 10.dp),
+                            color = Color(0xFF2E4631)
+                        )
+
+                        DiagnosticRow(
+                            label = "Active Line Index",
+                            value = if (activeIdx >= 0) "Line ${activeIdx + 1} of $totalCount" else "Intro (before line 1)",
+                            valueColor = if (activeIdx >= 0) Color(0xFF81C784) else Color(0xFFFFB74D)
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        val activeTimestamp = syncState.activeLine?.timestampMs?.let { formatTime(it) } ?: "--:--"
+                        DiagnosticRow(
+                            label = "Active Timestamp",
+                            value = "$activeTimestamp (Current: $formattedPosition)"
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        val secondsUntilNext = syncState.msUntilNextLine?.let {
+                            String.format(Locale.US, "%.1fs", it / 1000.0)
+                        } ?: "None (Last Line)"
+                        DiagnosticRow(
+                            label = "Next Line In",
+                            value = secondsUntilNext,
+                            valueColor = Color(0xFF64B5F6)
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Text(
+                            text = "Live Synchronized View:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.LightGray
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Show previous line if available
+                        if (activeIdx > 0) {
+                            val prevLine = successResult.lines[activeIdx - 1]
+                            Text(
+                                text = "   ${formatTime(prevLine.timestampMs)}  ${prevLine.text}",
+                                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                                color = Color(0xFF777777),
+                                modifier = Modifier.padding(vertical = 2.dp)
+                            )
+                        }
+
+                        // Show active line (prominently highlighted)
+                        if (activeIdx >= 0 && syncState.activeLine != null) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFF2E7D32).copy(alpha = 0.35f), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                            ) {
                                 Text(
-                                    text = "Preview (First 4 Lines):",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.Gray
+                                    text = "▶ ${formatTime(syncState.activeLine!!.timestampMs)}  ${syncState.activeLine!!.text}",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontFamily = FontFamily.Monospace,
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    color = Color(0xFFA5D6A7)
                                 )
-                                Spacer(modifier = Modifier.height(6.dp))
-                                result.lines.take(4).forEach { line ->
-                                    Text(
-                                        text = "${formatTime(line.timestampMs)}  ${line.text}",
-                                        style = MaterialTheme.typography.bodySmall.copy(
-                                            fontFamily = FontFamily.Monospace
-                                        ),
-                                        color = Color(0xFFDDDDDD),
-                                        modifier = Modifier.padding(vertical = 2.dp)
-                                    )
-                                }
                             }
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFFE65100).copy(alpha = 0.25f), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    text = "▶ [Introductory Music Playing]",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontFamily = FontFamily.Monospace,
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    color = Color(0xFFFFB74D)
+                                )
+                            }
+                        }
+
+                        // Show next line if available
+                        if (syncState.nextLine != null) {
+                            Text(
+                                text = "   ${formatTime(syncState.nextLine!!.timestampMs)}  ${syncState.nextLine!!.text}",
+                                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                                color = Color(0xFF777777),
+                                modifier = Modifier.padding(vertical = 2.dp)
+                            )
                         }
                     }
                 }

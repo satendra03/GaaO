@@ -14,3 +14,4 @@ data class LrclibResponse(
     @SerialName("plainLyrics") val plainLyrics: String? = null,
     @SerialName("syncedLyrics") val syncedLyrics: String? = null
 )
+

@@ -11,6 +11,8 @@ import com.gaao.app.data.media.MediaSessionRepository
 import com.gaao.app.data.model.LyricsResult
 import com.gaao.app.data.model.MediaPlaybackInfo
 import com.gaao.app.data.model.PlaybackState
+import com.gaao.app.domain.SyncState
+import com.gaao.app.domain.SynchronizationEngine
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +36,9 @@ class DiagnosticViewModel(application: Application) : AndroidViewModel(applicati
     private val _lyricsState = MutableStateFlow<LyricsResult>(LyricsResult.Idle)
     val lyricsState: StateFlow<LyricsResult> = _lyricsState.asStateFlow()
 
+    private val _syncState = MutableStateFlow(SyncState())
+    val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
+
     val isListenerConnected: StateFlow<Boolean> = MediaNotificationListener.isListenerConnected
     val playbackInfo: StateFlow<MediaPlaybackInfo?> = mediaRepository.playbackInfo
     val statusMessage: StateFlow<String> = mediaRepository.statusMessage
@@ -41,17 +46,21 @@ class DiagnosticViewModel(application: Application) : AndroidViewModel(applicati
     private var activeTrackId: String? = null
 
     init {
-        // Periodic position tracker for smooth UI display when playing
+        // High-frequency interpolation loop for smooth lyric synchronization
         viewModelScope.launch {
             while (isActive) {
                 updateEstimatedPosition()
-                delay(500)
+                val isPlaying = playbackInfo.value?.playbackState == PlaybackState.PLAYING
+                delay(if (isPlaying) 50L else 200L)
             }
         }
 
         // Automatic lyrics retrieval when song changes (FR-03, FR-06)
         viewModelScope.launch {
             playbackInfo.collect { info ->
+                // Immediate recalculation for seeks and playback state changes
+                updateEstimatedPosition()
+
                 val trackTitle = info?.trackTitle?.trim()
                 val artist = info?.artist?.trim()
 
@@ -59,6 +68,7 @@ class DiagnosticViewModel(application: Application) : AndroidViewModel(applicati
                     if (activeTrackId != null) {
                         activeTrackId = null
                         _lyricsState.value = LyricsResult.Idle
+                        _syncState.value = SyncState()
                     }
                     return@collect
                 }
@@ -66,6 +76,7 @@ class DiagnosticViewModel(application: Application) : AndroidViewModel(applicati
                 val trackId = "$trackTitle|$artist"
                 if (trackId != activeTrackId) {
                     activeTrackId = trackId
+                    _syncState.value = SyncState()
                     loadLyrics(trackTitle, artist, info.durationMs, info.album)
                 }
             }
@@ -105,26 +116,43 @@ class DiagnosticViewModel(application: Application) : AndroidViewModel(applicati
                 album = album
             )
             _lyricsState.value = result
+            updateSyncState(_estimatedPositionMs.value)
         }
     }
 
     private fun updateEstimatedPosition() {
         val info = playbackInfo.value ?: run {
             _estimatedPositionMs.value = 0L
+            updateSyncState(0L)
             return
         }
 
-        if (info.playbackState == PlaybackState.PLAYING) {
+        val calculatedPos = if (info.playbackState == PlaybackState.PLAYING) {
             val now = SystemClock.elapsedRealtime()
             val timeDelta = (now - info.lastPositionUpdateTimeMs).coerceAtLeast(0L)
             val estimated = info.positionMs + (timeDelta * info.playbackSpeed).toLong()
-            _estimatedPositionMs.value = if (info.durationMs > 0) {
+            if (info.durationMs > 0) {
                 estimated.coerceAtMost(info.durationMs)
             } else {
                 estimated
             }
         } else {
-            _estimatedPositionMs.value = info.positionMs
+            info.positionMs
+        }
+
+        _estimatedPositionMs.value = calculatedPos
+        updateSyncState(calculatedPos)
+    }
+
+    private fun updateSyncState(currentPos: Long) {
+        val currentLyrics = _lyricsState.value
+        if (currentLyrics is LyricsResult.Success) {
+            _syncState.value = SynchronizationEngine.findActiveLine(
+                lines = currentLyrics.lines,
+                currentPositionMs = currentPos
+            )
+        } else {
+            _syncState.value = SyncState()
         }
     }
 }

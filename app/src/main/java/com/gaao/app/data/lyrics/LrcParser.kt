@@ -69,3 +69,4 @@ object LrcParser {
         return parsedLines.sortedBy { it.timestampMs }
     }
 }
+

@@ -18,3 +18,4 @@ sealed interface LyricsResult {
     object Offline : LyricsResult
     data class Error(val message: String) : LyricsResult
 }
+
