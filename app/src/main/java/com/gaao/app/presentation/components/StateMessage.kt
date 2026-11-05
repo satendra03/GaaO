@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -27,8 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gaao.app.presentation.GaaOAppState
 import com.gaao.app.presentation.GaaOUiState
-import com.gaao.app.ui.theme.BebasNeueFamily
-import com.gaao.app.ui.theme.PlayfairDisplayFamily
+import com.gaao.app.ui.theme.EnglishFamily
+import com.gaao.app.ui.theme.EnglishSecondary
 
 @Composable
 fun StateMessage(
@@ -55,17 +54,18 @@ fun StateMessage(
                 GaaOAppState.PERMISSION_REQUIRED -> {
                     Text(
                         text = "NOTIFICATION ACCESS",
-                        fontFamily = BebasNeueFamily,
-                        fontSize = 32.sp,
-                        letterSpacing = 2.sp,
+                        fontFamily = EnglishFamily,
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold,
                         color = Color.White,
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "GaaO needs notification access to detect what's playing in Spotify and YouTube Music.",
-                        fontFamily = PlayfairDisplayFamily,
-                        fontSize = 16.sp,
+                        text = "GaaO requires notification access to identify playing music from Spotify & YouTube Music.",
+                        fontFamily = EnglishSecondary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Normal,
                         color = Color(0xFFAAAAAA),
                         textAlign = TextAlign.Center
                     )
@@ -73,51 +73,43 @@ fun StateMessage(
                     Button(
                         onClick = onGrantPermission,
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(24.dp)
+                        shape = RoundedCornerShape(20.dp)
                     ) {
-                        Text("Grant Permission", color = Color.Black, fontWeight = FontWeight.Bold)
+                        Text("Grant Access", fontFamily = EnglishSecondary, fontSize = 14.sp, color = Color.Black, fontWeight = FontWeight.Bold)
                     }
                 }
 
                 GaaOAppState.IDLE -> {
                     Text(
-                        text = "GaaO",
-                        fontFamily = PlayfairDisplayFamily,
-                        fontSize = 58.sp,
-                        fontWeight = FontWeight.Normal,
-                        letterSpacing = 6.sp,
+                        text = "GAAO",
+                        fontFamily = EnglishFamily,
+                        fontSize = 44.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 4.sp,
                         color = Color.White
                     )
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Waiting for music...",
-                        fontFamily = PlayfairDisplayFamily,
-                        fontSize = 18.sp,
-                        color = Color(0xFF7E7E7E),
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Play a song in Spotify or YouTube Music",
-                        fontFamily = PlayfairDisplayFamily,
-                        fontSize = 14.sp,
-                        color = Color(0xFF484848),
+                        fontFamily = EnglishSecondary,
+                        fontSize = 17.sp,
+                        color = Color(0xFF6E6E6E),
                         textAlign = TextAlign.Center
                     )
                 }
 
                 GaaOAppState.LOADING_LYRICS -> {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(36.dp),
+                        modifier = Modifier.size(32.dp),
                         color = Color.White,
-                        strokeWidth = 2.dp
+                        strokeWidth = 2.5.dp
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
-                        text = "FINDING LYRICS",
-                        fontFamily = BebasNeueFamily,
-                        fontSize = 28.sp,
-                        letterSpacing = 3.sp,
+                        text = "FINDING LYRICS...",
+                        fontFamily = EnglishFamily,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
                         color = Color.White,
                         textAlign = TextAlign.Center
                     )
@@ -125,8 +117,9 @@ fun StateMessage(
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "${uiState.trackTitle}  •  ${uiState.artist ?: ""}",
-                            fontFamily = PlayfairDisplayFamily,
+                            fontFamily = EnglishSecondary,
                             fontSize = 15.sp,
+                            fontWeight = FontWeight.Normal,
                             color = Color(0xFF888888),
                             textAlign = TextAlign.Center
                         )
@@ -135,18 +128,18 @@ fun StateMessage(
 
                 GaaOAppState.OFFLINE -> {
                     Text(
-                        text = "OFFLINE",
-                        fontFamily = BebasNeueFamily,
-                        fontSize = 36.sp,
-                        letterSpacing = 3.sp,
+                        text = "NO INTERNET",
+                        fontFamily = EnglishFamily,
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold,
                         color = Color.White,
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Connect to the internet to load synchronized lyrics.",
-                        fontFamily = PlayfairDisplayFamily,
-                        fontSize = 16.sp,
+                        text = "Connect to mobile data or Wi-Fi to load lyrics.",
+                        fontFamily = EnglishSecondary,
+                        fontSize = 15.sp,
                         color = Color(0xFF888888),
                         textAlign = TextAlign.Center
                     )
@@ -156,26 +149,26 @@ fun StateMessage(
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C2C2C)),
                         shape = RoundedCornerShape(20.dp)
                     ) {
-                        Text("Retry", color = Color.White)
+                        Text("Retry", fontFamily = EnglishSecondary, fontSize = 14.sp, color = Color.White)
                     }
                 }
 
                 GaaOAppState.LYRICS_UNAVAILABLE -> {
                     Text(
                         text = "LYRICS UNAVAILABLE",
-                        fontFamily = BebasNeueFamily,
-                        fontSize = 32.sp,
-                        letterSpacing = 2.sp,
-                        color = Color(0xFFFFB74D),
+                        fontFamily = EnglishFamily,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
                         textAlign = TextAlign.Center
                     )
                     if (!uiState.trackTitle.isNullOrBlank()) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "${uiState.trackTitle}  •  ${uiState.artist ?: ""}",
-                            fontFamily = PlayfairDisplayFamily,
-                            fontSize = 16.sp,
-                            color = Color(0xFF888888),
+                            fontFamily = EnglishSecondary,
+                            fontSize = 15.sp,
+                            color = Color(0xFF777777),
                             textAlign = TextAlign.Center
                         )
                     }
@@ -184,7 +177,7 @@ fun StateMessage(
                 GaaOAppState.ERROR -> {
                     Text(
                         text = uiState.errorMessage ?: "An error occurred",
-                        fontFamily = PlayfairDisplayFamily,
+                        fontFamily = EnglishSecondary,
                         fontSize = 16.sp,
                         color = Color(0xFFFF5252),
                         textAlign = TextAlign.Center
@@ -195,7 +188,7 @@ fun StateMessage(
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C2C2C)),
                         shape = RoundedCornerShape(20.dp)
                     ) {
-                        Text("Retry", color = Color.White)
+                        Text("Retry", fontFamily = EnglishSecondary, fontSize = 14.sp, color = Color.White)
                     }
                 }
 

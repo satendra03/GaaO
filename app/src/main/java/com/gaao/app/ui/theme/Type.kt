@@ -8,18 +8,49 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.gaao.app.R
 
-val BebasNeueFamily = FontFamily(
-    Font(R.font.bebas_neue, FontWeight.Normal)
+// Main Lyrics - Hindi
+val HindiFamily = FontFamily(
+    Font(R.font.hindi, FontWeight.Normal)
 )
 
-val PlayfairDisplayFamily = FontFamily(
-    Font(R.font.playfair_display, FontWeight.Normal)
+// Main Lyrics - English
+val EnglishFamily = FontFamily(
+    Font(R.font.english, FontWeight.Bold)
 )
 
-// Set of Material typography styles
+val EnglishFamilyBold = FontFamily(
+    Font(R.font.english, FontWeight.Bold)
+)
+
+// Secondary info & header text
+val EnglishSecondary = FontFamily(
+    Font(R.font.english_secondary, FontWeight.Normal)
+)
+
+fun isHindiOrDevanagari(text: String): Boolean {
+    return text.any { it in '\u0900'..'\u097F' }
+}
+
+fun getMainLyricsFont(text: String): FontFamily {
+    return if (isHindiOrDevanagari(text)) HindiFamily else EnglishFamily
+}
+
+fun getSecondaryFont(): FontFamily = EnglishSecondary
+
+// Backward compatibility aliases
+val TimesNewRomanFamily: FontFamily = EnglishSecondary
+val BasicCommerceFamily: FontFamily = EnglishFamily
+val AmsBhagyshriFamily: FontFamily = HindiFamily
+val BasicCommerceItalicFamily: FontFamily = EnglishFamily
+
+// Backward compatibility helper
+fun getPosterFontFamily(text: String): FontFamily = getMainLyricsFont(text)
+fun getHeroFontFamily(text: String): FontFamily = getMainLyricsFont(text)
+fun getAccentFontFamily(text: String): FontFamily = getMainLyricsFont(text)
+
 val Typography = Typography(
     bodyLarge = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = EnglishSecondary,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         lineHeight = 24.sp,

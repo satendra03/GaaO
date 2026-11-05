@@ -41,8 +41,8 @@ class LyricsViewModel(application: Application) : AndroidViewModel(application) 
     private val _syncState = MutableStateFlow(SyncState())
     val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
 
-    // Default +200ms lead offset to compensate for Android audio buffer & Bluetooth latency
-    private val _syncOffsetMs = MutableStateFlow(200L)
+    // Default +400ms lead offset to compensate for Android audio buffer, DAC & Bluetooth latency
+    private val _syncOffsetMs = MutableStateFlow(400L)
     val syncOffsetMs: StateFlow<Long> = _syncOffsetMs.asStateFlow()
 
     private val _showDiagnosticOverlay = MutableStateFlow(false)
@@ -117,12 +117,12 @@ class LyricsViewModel(application: Application) : AndroidViewModel(application) 
     )
 
     init {
-        // High frequency position tracker & synchronization loop
+        // 60 FPS real-time position tracker & synchronization loop
         viewModelScope.launch {
             while (isActive) {
                 updateEstimatedPosition()
                 val isPlaying = playbackInfo.value?.playbackState == PlaybackState.PLAYING
-                delay(if (isPlaying) 50L else 200L)
+                delay(if (isPlaying) 16L else 200L)
             }
         }
 

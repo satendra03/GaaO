@@ -26,7 +26,7 @@ data class GaaOUiState(
     val currentPositionMs: Long = 0L,
     val lyrics: List<LyricLine> = emptyList(),
     val syncState: SyncState = SyncState(),
-    val syncOffsetMs: Long = 200L,
+    val syncOffsetMs: Long = 400L,
     val errorMessage: String? = null,
     val showDiagnosticOverlay: Boolean = false
 )
